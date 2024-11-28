@@ -1,9 +1,6 @@
 "use client";
 
 import APIClient from "@/libs/api-client";
-import { API_ENDPOINTS } from "@/libs/config";
-import { PaginationResponse, PaginationResponseSuccess } from "@/libs/types";
-import { useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { Card, CardBody, CardHeader } from "@nextui-org/card";
 import { Pagination } from "@nextui-org/pagination";
@@ -11,6 +8,7 @@ import Link from "next/link";
 import { formatedDate, formatedTimeToMinutes } from "@/app/util";
 import { Divider } from "@nextui-org/divider";
 import { useRouter } from "next/navigation";
+import { useInterviewContext } from "../_providers/InterviewProvider";
 
 interface InterViewScheduleInterface {
   id: string;
@@ -26,42 +24,10 @@ interface InterViewScheduleInterface {
   interviewer: any;
 }
 
-const apiClient = new APIClient({
-  onFulfilled: (response) => response,
-  onRejected: (error) => {
-    console.log(error.response.data);
-  },
-});
-
 export default function InterViewCard() {
   const [pageIndex, setPageIndex] = useState(1);
 
-  const pageSize = 6;
-
-  const { isLoading, data, refetch } = useQuery({
-    queryKey: ["interviewSchedule", pageIndex, pageSize],
-    queryFn: async () => {
-      const response = await apiClient.get<
-        PaginationResponse<InterViewScheduleInterface>
-      >(API_ENDPOINTS.interviewSchedule, {
-        params: new URLSearchParams({
-          PageIndex: pageIndex.toString(),
-          PageSize: pageSize.toString(),
-        }),
-      });
-
-      if (response?.statusCode === "200") {
-        const { data } =
-          response as PaginationResponseSuccess<InterViewScheduleInterface>;
-
-        return {
-          interviewSchedules: data.pagingData,
-          pageIndex: data.pageIndex,
-          totalPages: data.totalPages,
-        };
-      }
-    },
-  });
+  const { listInterviewData } = useInterviewContext() || {};
 
   const router = useRouter();
 
@@ -72,8 +38,8 @@ export default function InterViewCard() {
   return (
     <div>
       <div className="grid h-full grid-cols-3 gap-6">
-        {data?.interviewSchedules &&
-          data.interviewSchedules.map(
+        {listInterviewData?.interviewSchedules &&
+          listInterviewData.interviewSchedules.map(
             (interview: InterViewScheduleInterface) => (
               <Card
                 key={interview.id as string}
@@ -142,7 +108,11 @@ export default function InterViewCard() {
         isCompact
         loop
         showControls
-        total={data?.totalPages ? Number(data.totalPages) : 0}
+        total={
+          listInterviewData?.totalPages
+            ? Number(listInterviewData.totalPages)
+            : 0
+        }
         initialPage={pageIndex}
         onChange={(page) => {
           setPageIndex(page);
