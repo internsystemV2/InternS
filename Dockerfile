@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Cài đặt các dependencies
-RUN npm install --force
+RUN npm install
 
 # Sao chép toàn bộ mã nguồn ứng dụng và file .env vào container
 COPY . .
