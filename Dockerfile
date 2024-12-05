@@ -4,13 +4,16 @@ FROM node:20-alpine AS build
 # Set the working directory
 WORKDIR /app
 
-# Install bun (version 1.1.29)
+# Install dependencies using npm
 RUN apk add --no-cache bash curl \
-    && curl -fsSL https://bun.sh/install | bash \
+    && curl -fsSL https://bun.sh/install | bash -s -- v1.1.38 \
     && export BUN_INSTALL="/root/.bun" \
     && export PATH="$BUN_INSTALL/bin:$PATH" \
-    && bun --version
-
+    && bun --version \
+    && npm install
+    # Clean cache before installing
+RUN bun cache clean \
+&& bun install
 # Set bun binary path
 ENV PATH="/root/.bun/bin:${PATH}"
 
