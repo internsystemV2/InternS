@@ -3,7 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - longt3  # Thực hiện build khi có push lên nhánh longt
+      - longt3  # Thực hiện build khi có push lên nhánh longt.
 
 jobs:
   build-and-push:
