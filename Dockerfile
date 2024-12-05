@@ -32,7 +32,7 @@ FROM nginx:alpine
 WORKDIR /usr/share/nginx/html
 
 # Copy the built files from the build stage
-COPY --from=build /app/dist .
+COPY --from=build /app/dist ./
 
 # Expose port 80 for the container
 EXPOSE 80
