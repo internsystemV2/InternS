@@ -6,14 +6,13 @@ WORKDIR /app
 
 # Install dependencies using npm
 RUN apk add --no-cache bash curl \
-    && curl -fsSL https://bun.sh/install | bash -s -- v1.1.39 \
+    && curl -fsSL https://bun.sh/install | bash \
     && export BUN_INSTALL="/root/.bun" \
     && export PATH="$BUN_INSTALL/bin:$PATH" \
     && bun --version
 
     # Clean cache before installing
-RUN bun cache clean \
-&& bun install
+RUN bun cache clean
 # Set bun binary path
 ENV PATH="/root/.bun/bin:${PATH}"
 
