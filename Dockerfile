@@ -7,13 +7,7 @@ WORKDIR /app
 # Install bash (since Alpine uses sh by default, we need to install bash)
 RUN apk add --no-cache bash
 
-# Install curl, bash and bun (latest version) globally
-RUN apk add --no-cache curl bash && \
-    curl -fsSL https://bun.sh/install | bash
-
-# Make bun available in the PATH
-ENV PATH="/root/.bun/bin:$PATH"
-
+RUN npm install bun
 # Verify that bun is installed
 RUN bun --version
 
@@ -21,7 +15,7 @@ RUN bun --version
 COPY bun.lockb package.json ./
 
 # Install dependencies using bun
-RUN bun install --production=false
+RUN bun install
 
 # Copy the rest of the application code into the container
 COPY . .
