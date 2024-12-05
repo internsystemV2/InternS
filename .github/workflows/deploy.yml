@@ -1,0 +1,74 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - longt  # Thực hiện build khi có push lên nhánh longt
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+
+    - name: Create .env file from secrets
+      run: echo "${{ secrets.ENV_PRODUCTION }}" > .env
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v3
+      with:
+        context: .
+        file: Dockerfile
+        push: true
+        tags: ${{ secrets.DOCKER_USERNAME }}/internsystem_fe:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+    - name: SSH into Server and deploy Docker container
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USERNAME }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        script: |
+          # Kiểm tra và tạo thư mục nếu chưa tồn tại
+          if [ ! -d "/home/longt/internsystem/internsystem_fe/" ]; then
+          mkdir -p /home/longt/internsystem/internsystem_fe/
+          fi
+          # Điều hướng tới thư mục chứa ứng dụng, nếu cần
+          cd /home/longt/internsystem/internsystem_fe/
+
+          # Tạo file default.conf từ secret
+          echo "${{ secrets.DEFAULT_CONF_PRODUCTION }}" > default.conf
+          echo "${{ secrets.ENV_PRODUCTION }}" > .env
+
+          # Dừng container Docker cũ nếu có
+          docker stop internsystem_fe || true
+
+          # Xóa container Docker cũ nếu có
+          docker rm internsystem_fe || true
+
+          # Xóa image Docker cũ nếu có
+          docker rmi ${{ secrets.DOCKER_USERNAME }}/internsystem_fe:latest || true
+
+          # Pull image mới nhất từ Docker Hub
+          docker pull ${{ secrets.DOCKER_USERNAME }}/internsystem_fe:latest
+
+          # Chạy container mới từ image vừa pull và chép .env vào thư mục html
+          docker run -d --name internsystem_fe --env-file .env -p 8325:80 \
+            -v $(pwd)/default.conf:/etc/nginx/conf.d/default.conf:ro \
+            ${{ secrets.DOCKER_USERNAME }}/internsystem_fe:latest
