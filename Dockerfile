@@ -1,14 +1,20 @@
 # Build stage
-FROM bun:latest AS build
+FROM node:20-alpine AS build
 
 # Set the working directory
 WORKDIR /app
 
+# Install bun (latest version) globally
+RUN curl -fsSL https://bun.sh/install | bash
+
+# Make bun available in the PATH
+ENV PATH="/root/.bun/bin:$PATH"
+
 # Copy dependency files first (to leverage Docker caching for dependencies)
 COPY bun.lockb package.json ./
 
-# Install dependencies
-RUN bun install
+# Install dependencies using bun
+RUN bun install --production=false
 
 # Copy the rest of the application code into the container
 COPY . .
