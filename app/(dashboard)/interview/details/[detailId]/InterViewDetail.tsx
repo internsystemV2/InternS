@@ -144,7 +144,9 @@ export default function InterViewDetailPage() {
                 <DropdownMenu aria-label="Dynamic Actions">
                   <DropdownItem key="view" className="flex items-center">
                     <Tooltip content="View candidate detail">
-                      <Link href={`/intern/details/${candidate.candidateId}`}>
+                      <Link
+                        href={`/intern/details/${candidate.candidateId}/interview-information`}
+                      >
                         <button className="flex cursor-pointer items-center">
                           <ViewIcon className="mr-2" /> View detail
                         </button>

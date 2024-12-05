@@ -31,13 +31,14 @@ import {
 import { toast } from "sonner";
 import { Button } from "@nextui-org/button";
 import { Input } from "@nextui-org/input";
+import Image from "next/image";
 
-interface QuestionData {
-  content: string;
-  imageUri: string;
-  difficulty: number;
-  technologyId: string;
-}
+// interface QuestionData {
+//   content: string;
+//   imageUri: string;
+//   difficulty: string;
+//   technologyId: string;
+// }
 
 export default function QuestionBankPage() {
   const params = useParams();
@@ -69,6 +70,7 @@ export default function QuestionBankPage() {
   const [imageUri, setImageUri] = useState("");
   const [difficulty, setDifficulty] = useState(0);
   const [technologyId] = useState(techId);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const { isLoading, data, refetch } = useQuery({
     queryKey: ["data", techId],
@@ -138,13 +140,10 @@ export default function QuestionBankPage() {
   });
 
   const { mutate } = useMutation({
-    mutationFn: async (newQuestion: QuestionData) => {
+    mutationFn: async (newQuestion: FormData) => {
       const response = await fetch(API_ENDPOINTS.interviewQuestion, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newQuestion),
+        body: newQuestion,
       });
 
       if (!response.ok) {
@@ -199,14 +198,34 @@ export default function QuestionBankPage() {
     updateMutation.mutate();
   };
 
-  const handleCreate = () => {
-    mutate({
-      content,
-      difficulty,
-      imageUri,
-      technologyId,
-    });
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setSelectedFile(e.target.files[0]);
+    }
   };
+
+  const handleCreate = () => {
+    if (!content || !difficulty || !technologyId || !selectedFile) {
+      toast.error("All fields are required and select an image!");
+      return;
+    }
+
+    const formData = new FormData();
+
+    formData.append("content", content);
+    formData.append("difficulty", difficulty.toString());
+    formData.append("technologyId", technologyId);
+    formData.append("ImageUri", selectedFile);
+    mutate(formData);
+
+    // mutate({
+    //   content,
+    //   difficulty,
+    //   imageUri,
+    //   technologyId,
+    // });
+  };
+
   const columns = [
     {
       key: "no",
@@ -241,7 +260,27 @@ export default function QuestionBankPage() {
         case "content":
           return <div>{question.content}</div>;
         case "imageUri":
-          return <div>{question.imageUri}</div>;
+          return (
+            <div>
+              {question.imageUri ? (
+                <Image
+                  width={50}
+                  height={50}
+                  alt={`${question.content} Image`}
+                  src={question.imageUri}
+                  className="object-contain"
+                />
+              ) : (
+                <Image
+                  width={50}
+                  height={50}
+                  alt="Default Question Image"
+                  src="/icons/technology/noimg.png"
+                  className="object-contain"
+                />
+              )}
+            </div>
+          );
         case "difficulty":
           return <div>{question.difficulty}</div>;
         case "actions":
@@ -426,21 +465,37 @@ export default function QuestionBankPage() {
                   onChange={(e) => setContent(e.target.value)}
                   isRequired
                 />
-                <Input
-                  label="Image URL"
-                  placeholder="Enter Image URL"
-                  labelPlacement="outside"
-                  onChange={(e) => setImageUri(e.target.value)}
-                  isRequired
-                />
+
                 <Input
                   label="Difficult"
                   placeholder="Enter question's difficult "
                   labelPlacement="outside"
+                  type="number"
                   value={difficulty.toString()}
                   onChange={(e) => setDifficulty(Number(e.target.value))}
                   isRequired
                 />
+                <div className="mb-4">
+                  <label
+                    htmlFor="file-upload"
+                    className="cursor-pointer text-blue-500 hover:text-blue-700"
+                  >
+                    Upload Image
+                  </label>
+                  <input
+                    id="file-upload"
+                    type="file"
+                    accept=".png, .jpg"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  {selectedFile && (
+                    <p className="mt-2 text-sm text-gray-600">
+                      <span className="font-semibold">Selected file: </span>
+                      {selectedFile.name}
+                    </p>
+                  )}
+                </div>
               </div>
             </ModalBody>
             <ModalFooter className="flex">

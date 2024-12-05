@@ -17,6 +17,7 @@ import {
 } from "../../../_types/GetPositionPaginationResponse";
 import { GetCandidateQuestionTemplateResponse } from "../../../_types/GetCandidateQuestionTemplate";
 import { useParams } from "next/navigation";
+import Image from "next/image";
 
 const apiClient = new APIClient({
   onFulfilled: (response) => response,
@@ -90,6 +91,7 @@ export default function InterviewInformationPage() {
     // make sure that selectedPosition and selectedTechnologies are not empty
     if (!selectedPosition || selectedTechnologies.size === 0) {
       toast.error("Please select position and technologies");
+
       return;
     }
 
@@ -195,14 +197,24 @@ export default function InterviewInformationPage() {
       "Answers not submitted! Please submit your answers.",
     [QuestionTemplateStatus.SUBMITTED]:
       "Answers submitted! Please evaluate the answers.",
-    [QuestionTemplateStatus.EVALUATED]: "Evaluation completed!",
+    [QuestionTemplateStatus.EVALUATED]: "📝 Evaluation completed!",
   };
 
   if (status === QuestionTemplateStatus.NOT_CREATED)
     return (
       <form className="flex flex-col gap-3">
+        <h2 className="text-2xl font-bold text-gray-800">
+          <span role="img" aria-label="form-icon">
+            📝
+          </span>{" "}
+          Interview Questions Form
+        </h2>
+        <div className="mb-2">
+          This candidate do not have question form yet, please create one!
+        </div>
         <Select
-          placeholder="Select position"
+          label="Select one position"
+          placeholder="Back-end"
           items={positions || []}
           onChange={(item) => {
             setSelectedPosition(item.target.value);
@@ -211,11 +223,11 @@ export default function InterviewInformationPage() {
         >
           {(item) => <SelectItem key={item.id}>{item.name}</SelectItem>}
         </Select>
-
         {selectedPosition && (
           <div className="flex flex-col gap-3">
             <Select
-              placeholder="Select technologies"
+              label="Select technologies"
+              placeholder="Java, Javascript, Nodejs, ..."
               items={technologies}
               selectionMode="multiple"
               // disabled={!selectedPosition}
@@ -224,8 +236,12 @@ export default function InterviewInformationPage() {
             >
               {(item) => <SelectItem key={item.id}>{item.name}</SelectItem>}
             </Select>
-            <Button onClick={createQuestions}>Create questions</Button>
           </div>
+        )}
+        {Array.from(selectedTechnologies)[0] ? (
+          <Button onClick={createQuestions}>Create questions</Button>
+        ) : (
+          <></>
         )}
       </form>
     );
@@ -239,19 +255,35 @@ export default function InterviewInformationPage() {
             <Card shadow="sm">
               <CardHeader>
                 <div className="flex w-full items-center justify-between">
-                  <p className="text-2xl font-semibold">Result</p>
+                  <p className="text-lg font-medium">
+                    {candidateQuestionTemplateDetails?.name}
+                  </p>
                 </div>
               </CardHeader>
               <CardBody className="gap-3">
-                <p>Result: {candidateQuestionTemplateDetails?.result}</p>
                 <p>
                   Total score:{" "}
-                  {candidateQuestionTemplateDetails?.totalAnswerScore}
-                </p>
-                <p>
-                  Total max score:{" "}
+                  {candidateQuestionTemplateDetails?.totalAnswerScore}/
                   {candidateQuestionTemplateDetails?.totalQuestionScore}
                 </p>
+                <p className="flex gap-1">
+                  Result:
+                  <p
+                    className={
+                      candidateQuestionTemplateDetails?.result == "Passed"
+                        ? "font-medium text-green-600"
+                        : "font-medium text-red-600"
+                    }
+                  >
+                    {candidateQuestionTemplateDetails?.result}
+                  </p>
+                </p>
+                <div className="flex gap-2">
+                  Evaluator name:{" "}
+                  <p className="font-medium">
+                    {candidateQuestionTemplateDetails?.reviewerName}
+                  </p>
+                </div>
               </CardBody>
             </Card>
           )
@@ -266,99 +298,127 @@ export default function InterviewInformationPage() {
         >
           {candidateQuestionTemplateDetails?.questionTemplateDetails.map(
             (questionTemplateDetail, id) => (
-              <Card key={questionTemplateDetail.id} shadow="sm">
-                <CardHeader>
-                  <div className="flex w-full items-center justify-between">
-                    <p className="text-2xl font-semibold">Question {id + 1}</p>
-                    <div className="flex flex-col items-end gap-2">
-                      <Chip className="ml-auto">
-                        Max score: {questionTemplateDetail.maxQuestionScore}
-                      </Chip>
+              <div
+                className="mb-6 flex h-fit gap-4"
+                key={questionTemplateDetail.id}
+              >
+                <Card shadow="sm" className="w-9/12">
+                  <CardHeader>
+                    <div className="flex w-full items-center justify-between">
+                      <p className="text-2xl font-semibold">
+                        Question {id + 1}
+                      </p>
+                      <div className="flex flex-col items-end gap-2">
+                        <Chip className="ml-auto">
+                          Max score: {questionTemplateDetail.maxQuestionScore}
+                        </Chip>
 
-                      {status !== QuestionTemplateStatus.CREATED && (
-                        <Input
-                          label="Your score:"
-                          labelPlacement="outside-left"
-                          type="number"
-                          defaultValue={"0"}
-                          name={questionTemplateDetail.id}
-                          max={questionTemplateDetail.maxQuestionScore}
-                          min={0}
-                          validate={(value) => {
-                            if (Number(value) < 0) {
-                              return "Score must be greater than 0";
+                        {status !== QuestionTemplateStatus.CREATED && (
+                          <Input
+                            label="Your score:"
+                            labelPlacement="outside-left"
+                            type="number"
+                            defaultValue={"0"}
+                            name={questionTemplateDetail.id}
+                            max={questionTemplateDetail.maxQuestionScore}
+                            min={0}
+                            validate={(value) => {
+                              if (Number(value) < 0) {
+                                return "Score must be greater than 0";
+                              }
+
+                              if (
+                                Number(value) >
+                                Number(questionTemplateDetail.maxQuestionScore)
+                              ) {
+                                return "Score must be less than max score";
+                              }
+                            }}
+                            onChange={(e) => {
+                              // remove the evaluation if it already exists
+                              evaluation = evaluation.filter(
+                                (evaluation) =>
+                                  evaluation.questionTemplateDetailId !==
+                                  questionTemplateDetail.id,
+                              );
+
+                              evaluation.push({
+                                questionTemplateDetailId:
+                                  questionTemplateDetail.id,
+                                answerScore: Number(e.target.value),
+                              });
+                            }}
+                            variant={
+                              status === QuestionTemplateStatus.SUBMITTED
+                                ? "bordered"
+                                : "flat"
                             }
-
-                            if (
-                              Number(value) >
-                              Number(questionTemplateDetail.maxQuestionScore)
-                            ) {
-                              return "Score must be less than max score";
+                            disabled={
+                              status !== QuestionTemplateStatus.SUBMITTED
                             }
-                          }}
-                          onChange={(e) => {
-                            // remove the evaluation if it already exists
-                            evaluation = evaluation.filter(
-                              (evaluation) =>
-                                evaluation.questionTemplateDetailId !==
-                                questionTemplateDetail.id,
-                            );
-
-                            evaluation.push({
-                              questionTemplateDetailId:
-                                questionTemplateDetail.id,
-                              answerScore: Number(e.target.value),
-                            });
-                          }}
-                          variant={
-                            status === QuestionTemplateStatus.SUBMITTED
-                              ? "bordered"
-                              : "flat"
-                          }
-                          disabled={status !== QuestionTemplateStatus.SUBMITTED}
-                        />
-                      )}
+                          />
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardBody className="gap-3">
-                  <h2>{questionTemplateDetail.interviewQuestion.content}</h2>
-                  <Textarea
-                    variant={
-                      status === QuestionTemplateStatus.CREATED
-                        ? "bordered"
-                        : "flat"
-                    }
-                    maxRows={7}
-                    minRows={5}
-                    name={questionTemplateDetail.interviewQuestion.id}
-                    placeholder="Your Answer"
-                    label="Your Answer:"
-                    labelPlacement="outside"
-                    onChange={(e) => {
-                      // remove the answer if it already exists
-                      answers = answers.filter(
-                        (answer) =>
-                          answer.interviewQuestionId !==
-                          questionTemplateDetail.interviewQuestion.id,
-                      );
+                  </CardHeader>
+                  <CardBody className="gap-3">
+                    <h2>{questionTemplateDetail.interviewQuestion.content}</h2>
+                    <Textarea
+                      variant={
+                        status === QuestionTemplateStatus.CREATED
+                          ? "bordered"
+                          : "flat"
+                      }
+                      maxRows={7}
+                      minRows={5}
+                      name={questionTemplateDetail.interviewQuestion.id}
+                      placeholder="Your Answer"
+                      label="Your Answer:"
+                      labelPlacement="outside"
+                      onChange={(e) => {
+                        // remove the answer if it already exists
+                        answers = answers.filter(
+                          (answer) =>
+                            answer.interviewQuestionId !==
+                            questionTemplateDetail.interviewQuestion.id,
+                        );
 
-                      answers.push({
-                        interviewQuestionId:
-                          questionTemplateDetail.interviewQuestion.id,
-                        answer: e.target.value,
-                      });
-                    }}
-                    defaultValue={
-                      // get the last answer
-                      questionTemplateDetail?.interviewAnswers[
-                        questionTemplateDetail.interviewAnswers.length - 1
-                      ]?.answer || ""
-                    }
-                    disabled={status !== QuestionTemplateStatus.CREATED}
-                  />
-                </CardBody>
-              </Card>
+                        answers.push({
+                          interviewQuestionId:
+                            questionTemplateDetail.interviewQuestion.id,
+                          answer: e.target.value,
+                        });
+                      }}
+                      defaultValue={
+                        // get the last answer
+                        questionTemplateDetail?.interviewAnswers[
+                          questionTemplateDetail.interviewAnswers.length - 1
+                        ]?.answer || ""
+                      }
+                      disabled={status !== QuestionTemplateStatus.CREATED}
+                    />
+                  </CardBody>
+                </Card>
+                <div className="h-fit w-fit border">
+                  {questionTemplateDetail?.interviewQuestion?.imageUri ? (
+                    <Image
+                      width={250}
+                      height={250}
+                      alt={`${questionTemplateDetail?.interviewQuestion?.content} Image`}
+                      src={questionTemplateDetail?.interviewQuestion?.imageUri}
+                      className="object-contain"
+                    />
+                  ) : (
+                    <Image
+                      className="border"
+                      width={250}
+                      height={250}
+                      alt="Default Question Image"
+                      src="/icons/technology/noimg.png"
+                    />
+                  )}
+                </div>
+              </div>
             ),
           )}
 

@@ -12,7 +12,7 @@ import { Button } from "@nextui-org/button";
 import { Input } from "@nextui-org/input";
 import { DatePicker } from "@nextui-org/date-picker";
 import { CreateIcon } from "@/app/(dashboard)/intern/_components/Icons";
-import { parseDate } from "@internationalized/date"; // Parses a date string or Date object to DateValue
+import { Calendar, CalendarDate, parseDate } from "@internationalized/date"; // Parses a date string or Date object to DateValue
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { API_ENDPOINTS } from "@/libs/config";
 import { toast } from "sonner";
@@ -39,14 +39,14 @@ export default function NewPeriodModal() {
 
   const [status, setStatus] = useState("0");
 
-  const [startDate, setStartDate] = useState(
+  const [startDate, setStartDate] = useState<CalendarDate>(
     parseDate(
       new Date(Date.now() + 1 * 24 * 60 * 60 * 1000)
         .toISOString()
         .split("T")[0],
     ),
   );
-  const [endDate, setEndDate] = useState(
+  const [endDate, setEndDate] = useState<CalendarDate>(
     parseDate(new Date().toISOString().split("T")[0]),
   );
 

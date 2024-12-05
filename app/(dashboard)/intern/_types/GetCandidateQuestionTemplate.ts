@@ -5,6 +5,7 @@ export type QuestionTemplateDetails = {
   result: string;
   candidateName: string;
   questionTemplateDetails: QuestionTemplateDetail[];
+  reviewerName: string;
   id: string;
   dateCreate: string;
   dateUpdate: string;
