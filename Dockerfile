@@ -4,6 +4,9 @@ FROM node:20-alpine AS build
 # Set the working directory
 WORKDIR /app
 
+# Install bash (since Alpine uses sh by default, we need to install bash)
+RUN apk add --no-cache bash
+
 # Install bun (latest version) globally
 RUN curl -fsSL https://bun.sh/install | bash
 
