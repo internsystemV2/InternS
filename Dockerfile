@@ -1,33 +1,35 @@
 # Build stage
 FROM node:20-alpine AS build
 
-# Thiết lập thư mục làm việc
+# Set the working directory
 WORKDIR /app
 
-# Sao chép package.json và package-lock.json để cài đặt dependencies
+# Copy dependency files first (to leverage Docker caching for dependencies)
 COPY package*.json ./
 
-# Cài đặt các dependencies
-RUN npm install
+# Install dependencies (with legacy-peer-deps to handle peer dependency conflicts)
+RUN npm install --legacy-peer-deps
 
-# Sao chép toàn bộ mã nguồn ứng dụng và file .env vào container
+# Copy the rest of the application code into the container
 COPY . .
 
-# Build ứng dụng với biến môi trường từ file .env
+# Build the application
 RUN npm run build
 
-# Kiểm tra xem thư mục dist có tồn tại sau khi build không
-RUN ls -l /app/dist
+# Ensure the build output exists
+RUN test -d /app/dist
 
 # Production stage
 FROM nginx:alpine
 
-# Thiết lập thư mục làm việc trong container Nginx
+# Set the working directory in the Nginx container
 WORKDIR /usr/share/nginx/html
 
-# Sao chép kết quả build từ bước trước vào Nginx
+# Copy the built files from the build stage
 COPY --from=build /app/dist .
 
+# Expose port 80 for the container
+EXPOSE 80
 
-# Khởi động Nginx
+# Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
