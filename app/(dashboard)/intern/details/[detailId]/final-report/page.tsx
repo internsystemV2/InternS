@@ -23,7 +23,7 @@ import { PDFExport } from "@progress/kendo-react-pdf";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import React, { Key, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 
 export default function FinalReportPage() {
   const statusColor: Record<string, string> = {
