@@ -47,13 +47,13 @@ jobs:
         script: |
           # Kiểm tra và tạo thư mục nếu chưa tồn tại
           if [ ! -d "/home/longt/internsystem/internsystem_fe/" ]; then
-          mkdir -p /home/longt/internsystem/internsystem_fe/
+            mkdir -p /home/longt/internsystem/internsystem_fe/
           fi
+
           # Điều hướng tới thư mục chứa ứng dụng, nếu cần
           cd /home/longt/internsystem/internsystem_fe/
 
-          # Tạo file default.conf từ secret
-          echo "${{ secrets.DEFAULT_CONF_PRODUCTION }}" > default.conf
+          # Tạo file .env từ secret
           echo "${{ secrets.ENV_PRODUCTION }}" > .env
 
           # Dừng container Docker cũ nếu có
@@ -68,7 +68,6 @@ jobs:
           # Pull image mới nhất từ Docker Hub
           docker pull ${{ secrets.DOCKER_USERNAME }}/internsystem_fe:latest
 
-          # Chạy container mới từ image vừa pull và chép .env vào thư mục html
+          # Chạy container mới từ image vừa pull và sử dụng .env cho môi trường
           docker run -d --name internsystem_fe --env-file .env -p 8325:80 \
-            -v $(pwd)/default.conf:/etc/nginx/conf.d/default.conf:ro \
             ${{ secrets.DOCKER_USERNAME }}/internsystem_fe:latest
