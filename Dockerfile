@@ -1,20 +1,20 @@
 # Build stage
-FROM node:20-alpine AS build
+FROM bun:latest AS build
 
 # Set the working directory
 WORKDIR /app
 
 # Copy dependency files first (to leverage Docker caching for dependencies)
-COPY package*.json ./
+COPY bun.lockb package.json ./
 
-# Install dependencies (with legacy-peer-deps to handle peer dependency conflicts)
-RUN npm install --production=false
+# Install dependencies
+RUN bun install
 
 # Copy the rest of the application code into the container
 COPY . .
 
-# Build the application
-RUN npm run build
+# Build the application using bun
+RUN bun build
 
 # Ensure the build output exists
 RUN test -d /app/dist
