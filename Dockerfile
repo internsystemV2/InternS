@@ -20,7 +20,7 @@ RUN bun install
 COPY . .
 
 # Build the application using bun
-RUN bun build
+RUN bun run build
 
 # Ensure the build output exists
 RUN test -d /app/dist
