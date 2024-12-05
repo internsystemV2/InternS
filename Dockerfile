@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Install bash, curl, and bun (version 1.1.29)
 RUN apk add --no-cache bash curl \
-    && curl -fsSL https://bun.sh/install | bash -s -- v1.1.29
+    && curl -fsSL https://bun.sh/install | bash
 
 # Set bun binary path
 ENV PATH="/root/.bun/bin:${PATH}"
