@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies (with legacy-peer-deps to handle peer dependency conflicts)
-RUN npm install
+RUN npm install --production=false
 
 # Copy the rest of the application code into the container
 COPY . .
