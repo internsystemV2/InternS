@@ -11,8 +11,6 @@ RUN apk add --no-cache bash curl \
     && export PATH="$BUN_INSTALL/bin:$PATH" \
     && bun --version
 
-    # Clean cache before installing
-RUN bun cache clean
 # Set bun binary path
 ENV PATH="/root/.bun/bin:${PATH}"
 
