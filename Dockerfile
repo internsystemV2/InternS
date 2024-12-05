@@ -18,7 +18,7 @@ ENV PATH="/root/.bun/bin:${PATH}"
 COPY package.json bun.lockb ./
 
 # Install dependencies using bun
-RUN bun install
+RUN yarn install
 # Copy the rest of the application code into the container
 COPY . .
 
